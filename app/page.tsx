@@ -31,6 +31,14 @@ export default function Home() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ index })
     })
+    // 編集中のtodoが削除された場合、編集状態をリセット
+    if (editIndex === index) {
+      setEditIndex(null)
+      setEditText('')
+    } else if (editIndex !== null && editIndex > index) {
+      // 削除されたtodoより後ろのtodoを編集中の場合、インデックスを調整
+      setEditIndex(editIndex - 1)
+    }
     fetchTodos()
   }
 
