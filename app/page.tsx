@@ -1,11 +1,16 @@
 'use client'
 
+type Todo = {
+  id: number
+  text: string
+}
+
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [todos, setTodos] = useState<string[]>([])
+  const [todos, setTodos] = useState<Todo[]>([])
   const [input, setInput] = useState('')
-  const [editIndex, setEditIndex] = useState<number | null>(null)
+  const [editId, setEditId] = useState<number | null>(null)
   const [editText, setEditText] = useState('')
 
   const fetchTodos = async () => {
@@ -18,43 +23,41 @@ export default function Home() {
     await fetch('/api/todos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ todo: input })
+      body: JSON.stringify({ text: input })
     })
     setInput('')
-    fetchTodos()    
+    fetchTodos()
   }
 
-  const handleDelete = async (index: number) => {
-    console.log("delete index:" + index)
+  const handleDelete = async (id: number) => {
     await fetch('/api/todos', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ index })
+      body: JSON.stringify({ id })
     })
     // 編集中のtodoが削除された場合、編集状態をリセット
-    if (editIndex === index) {
-      setEditIndex(null)
+    if (editId === id) {
+      setEditId(null)
       setEditText('')
-    } else if (editIndex !== null && editIndex > index) {
-      // 削除されたtodoより後ろのtodoを編集中の場合、インデックスを調整
-      setEditIndex(editIndex - 1)
+    } else if (editId !== null && editId > id) {
+      // 削除されたtodoより後ろのtodoを編集中の場合、IDを調整
+      setEditId(editId - 1)
     }
     fetchTodos()
   }
 
-  const handleEdit = async (index: number) => {
-    console.log("edit index:" + index)
-    setEditIndex(index)
-    setEditText(todos[index])
+  const handleEdit = async (todo: Todo) => {
+    setEditId(todo.id)
+    setEditText(todo.text)
   }
 
   const handleUpdate = async () => {
     await fetch('/api/todos', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ index: editIndex, newTodo: editText })
+      body: JSON.stringify({ id: editId, text: editText })
     })
-    setEditIndex(null)
+    setEditId(null)
     setEditText('')
     fetchTodos()
   }
@@ -69,7 +72,7 @@ export default function Home() {
         <h1 className="text-2xl font-bold mb-4 text-center text-blue-600">My Todo App</h1>
 
         <div className="flex gap-2 mb-4">
-          <input 
+          <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -85,27 +88,27 @@ export default function Home() {
         </div>
 
         <ul className="space-y-2">
-          {todos.map((todo, index) => (
-            <li 
-              key={index}
+          {todos.map((todo) => (
+            <li
+              key={todo.id}
               className="flex items-center justify-between bg-gray-300 p-2 rounded"
             >
               <div className="flex-1">
-                {editIndex === index ? (
-                  <input 
+                {editId === todo.id ? (
+                  <input
                     type="text"
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     className="w-full border-b border-blue-400 px-1 focus:outline-none"
                   />
                 ) : (
-                  <span>{todo}</span>
+                  <span>{todo.text}</span>
                 )
                 }
-                
+
               </div>
               <div className="flex gap-2 ml-2">
-                {editIndex === index ? (
+                {editId === todo.id ? (
                   <button
                     onClick={() => handleUpdate()}
                     className="text-green-600 hover:underline text-sm"
@@ -114,14 +117,14 @@ export default function Home() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => handleEdit(index)}
+                    onClick={() => handleEdit(todo)}
                     className="text-blue-600 hover:underline text-sm"
                   >
                     編集
                   </button>
-                )}                
+                )}
                 <button
-                  onClick={() => handleDelete(index)}
+                  onClick={() => handleDelete(todo.id)}
                   className="text-red-500 hover:underline text-sm"
                 >
                   削除
